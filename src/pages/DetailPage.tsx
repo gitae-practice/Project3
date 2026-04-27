@@ -145,7 +145,7 @@ export default function DetailPage() {
 
       {/* ─── 상세 콘텐츠 ─── */}
       <motion.div
-        className="max-w-5xl mx-auto px-6 -mt-24 relative z-10"
+        className="-mt-24 relative z-10" style={{ padding: '0 80px' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}

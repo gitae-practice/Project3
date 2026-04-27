@@ -65,7 +65,7 @@ export default function SearchPage() {
     : '탐색하기'
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
+    <div style={{ padding: '40px 80px' }}>
       {/* 페이지 제목 */}
       <motion.h1
         className="text-xl font-bold mb-8"

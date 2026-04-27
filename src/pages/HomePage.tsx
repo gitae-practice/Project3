@@ -39,7 +39,7 @@ export default function HomePage() {
       {heroItem && <HeroBanner item={heroItem} />}
 
       {/* ─── 트렌딩 영화 ─── */}
-      <section className="px-16 md:px-24 py-10">
+      <section style={{ padding: '40px 80px' }}>
         <SectionHeader title="트렌딩 영화" linkTo="/search?filter=movie" />
         {moviesLoading ? (
           <Spinner />
@@ -61,7 +61,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── 트렌딩 드라마 ─── */}
-      <section className="px-16 md:px-24 py-4 pb-10">
+      <section style={{ padding: '0 80px 40px' }}>
         <SectionHeader title="트렌딩 드라마" linkTo="/search?filter=tv" />
         {tvLoading ? (
           <Spinner />
@@ -119,7 +119,7 @@ function HeroBanner({ item }: { item: TmdbMedia }) {
 
       {/* 2컬럼 콘텐츠 — 좌: 텍스트, 우: 포스터 */}
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full px-16 md:px-24">
+        <div className="w-full" style={{ padding: '0 80px' }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
 
             {/* 왼쪽: 텍스트 영역 */}

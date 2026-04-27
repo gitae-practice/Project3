@@ -50,7 +50,7 @@ export default function WatchlistPage() {
     activeTab === 'all' ? items : items.filter(i => i.status === activeTab)
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
+    <div style={{ padding: '40px 80px' }}>
       {/* 페이지 제목 */}
       <div className="mb-8">
         <h1 className="text-xl font-bold" style={{ color: '#f1f1f1' }}>
