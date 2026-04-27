@@ -57,16 +57,17 @@ export default function MediaCard({ item, mediaType }: MediaCardProps) {
 
   return (
     // whileHover로 카드 전체에 hover 상태를 전파 — 자식 variants에서 감지
+    // overflow-hidden은 이미지 영역에만 적용 — 하단 텍스트가 radius에 잘리지 않도록
     <motion.div
-      className="relative rounded-xl overflow-hidden cursor-pointer group"
+      className="relative rounded-xl cursor-pointer group"
       whileHover="hover"
       initial="rest"
       animate="rest"
       onClick={handleCardClick}
       style={{ backgroundColor: '#1c1c1c' }}
     >
-      {/* 포스터 이미지 — 2:3 비율 고정 */}
-      <div className="relative" style={{ aspectRatio: '2/3' }}>
+      {/* 포스터 이미지 — 2:3 비율 고정, overflow-hidden을 여기에만 적용 */}
+      <div className="relative rounded-xl overflow-hidden" style={{ aspectRatio: '2/3' }}>
         {posterUrl ? (
           <motion.img
             src={posterUrl}
