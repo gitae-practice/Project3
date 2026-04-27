@@ -50,7 +50,7 @@ export default function Navbar() {
         borderBottom: scrolled ? '1px solid #1f1f1f' : 'none',
       }}
     >
-      <div className="px-10 md:px-16 h-16 flex items-center justify-between gap-6">
+      <div className="px-16 md:px-24 h-16 flex items-center justify-between gap-6">
 
         {/* 로고 */}
         <Link
