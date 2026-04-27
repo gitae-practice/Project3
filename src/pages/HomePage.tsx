@@ -8,6 +8,7 @@ import {
   getKoreanTV,
   getImageUrl,
   type TmdbMedia,
+  type TmdbListResponse,
 } from '../api/tmdb'
 import MediaCard from '../components/ui/MediaCard'
 import Spinner from '../components/ui/Spinner'
@@ -36,10 +37,10 @@ export default function HomePage() {
     queryFn: getTrendingTV,
   })
 
-  // 한국 드라마 별도 fetch
-  const { data: koreanTV, isLoading: koreanLoading } = useQuery({
+  // 한국 드라마 별도 fetch — 명시적 타입 지정으로 TypeScript 추론 오류 방지
+  const { data: koreanTV, isLoading: koreanLoading } = useQuery<TmdbListResponse>({
     queryKey: ['korean-tv'],
-    queryFn: getKoreanTV,
+    queryFn: () => getKoreanTV(),
   })
 
   const heroItem = movies?.results?.[0]
