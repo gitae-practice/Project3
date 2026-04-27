@@ -56,7 +56,7 @@ export default function AuthPage() {
         {/* 로고 */}
         <div className="text-center mb-8">
           <span className="text-2xl font-bold" style={{ color: '#d4a843' }}>
-            무비로그
+            GitaeMovie
           </span>
           <p className="text-sm mt-1" style={{ color: '#666' }}>
             {mode === 'signin' ? '로그인하고 내 목록을 관리하세요' : '무료로 시작하세요'}

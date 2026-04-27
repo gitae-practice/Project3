@@ -50,7 +50,7 @@ export default function Navbar() {
         borderBottom: scrolled ? '1px solid #1f1f1f' : 'none',
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
+      <div className="px-10 md:px-16 h-16 flex items-center justify-between gap-6">
 
         {/* 로고 */}
         <Link
@@ -58,7 +58,7 @@ export default function Navbar() {
           className="text-xl font-bold tracking-tight shrink-0"
           style={{ color: '#d4a843' }}
         >
-          무비로그
+          GitaeMovie
         </Link>
 
         {/* 가운데 네비게이션 링크 */}
