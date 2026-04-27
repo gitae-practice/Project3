@@ -121,9 +121,11 @@ function HeroBanner({ item }: { item: TmdbMedia }) {
         }}
       />
 
-      {/* 텍스트 콘텐츠 */}
+      {/* 텍스트 콘텐츠 — max-w-7xl로 카드 그리드와 좌측 기준선 맞춤 */}
+      <div className="absolute bottom-0 left-0 right-0 pb-16">
+        <div className="max-w-7xl mx-auto px-6">
       <motion.div
-        className="absolute bottom-0 left-0 px-6 md:px-12 pb-16 max-w-xl"
+        className="max-w-xl"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
@@ -175,6 +177,8 @@ function HeroBanner({ item }: { item: TmdbMedia }) {
           </button>
         </div>
       </motion.div>
+        </div>
+      </div>
     </div>
   )
 }
