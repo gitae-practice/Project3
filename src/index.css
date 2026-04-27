@@ -1,7 +1,7 @@
-/* Tailwind CSS v4 진입점 — 이 한 줄로 모든 유틸리티 클래스가 활성화됨 */
+/* Tailwind CSS v4 진입점 */
 @import "tailwindcss";
 
-/* 전역 기본 스타일 */
+/* ─── 전역 기본 스타일 ─── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -9,20 +9,27 @@
 }
 
 body {
-  font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+  /* Noto Sans KR 우선, 없으면 시스템 폰트 */
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
   background-color: #0f0f0f;
   color: #f1f1f1;
   -webkit-font-smoothing: antialiased;
 }
 
-/* 스크롤바 커스텀 — 다크 테마에 맞게 */
+/* 스크롤바 커스텀 — 다크 테마에 맞게 얇고 어둡게 */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 ::-webkit-scrollbar-track {
   background: #1a1a1a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #444;
+  background: #3a3a3a;
   border-radius: 3px;
+}
+
+/* 이미지 기본값 — 깨지지 않도록 블록으로 */
+img {
+  display: block;
+  max-width: 100%;
 }
