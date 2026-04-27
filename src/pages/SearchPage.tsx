@@ -5,6 +5,8 @@ import {
   searchMulti,
   getPopularMovies,
   getPopularTV,
+  getKoreanTV,
+  type TmdbListResponse,
 } from '../api/tmdb'
 import MediaCard from '../components/ui/MediaCard'
 import Spinner from '../components/ui/Spinner'
@@ -20,35 +22,48 @@ export default function SearchPage() {
   const { data: searchData, isLoading: searchLoading } = useQuery({
     queryKey: ['search', query],
     queryFn: () => searchMulti(query),
-    enabled: !!query, // 검색어 없으면 비활성화
+    enabled: !!query,
   })
 
-  // 영화 목록 fetch — filter=movie 이거나 기본 탐색용
-  const { data: moviesData, isLoading: moviesLoading } = useQuery({
+  // 영화 목록 fetch
+  const { data: moviesData, isLoading: moviesLoading } = useQuery<TmdbListResponse>({
     queryKey: ['popular-movies'],
     queryFn: () => getPopularMovies(),
-    enabled: !query && filter !== 'tv', // 검색어 없을 때만
+    enabled: !query && filter !== 'tv',
   })
 
-  // 드라마 목록 fetch
-  const { data: tvData, isLoading: tvLoading } = useQuery({
+  // 글로벌 드라마 목록 fetch
+  const { data: tvData, isLoading: tvLoading } = useQuery<TmdbListResponse>({
     queryKey: ['popular-tv'],
     queryFn: () => getPopularTV(),
     enabled: !query && filter !== 'movie',
   })
 
-  // 표시할 데이터 결정
-  const isLoading = searchLoading || moviesLoading || tvLoading
+  // 한국 드라마 fetch — TV 탭에서만 추가로 불러와 글로벌 드라마와 혼합
+  const { data: koreanData, isLoading: koreanLoading } = useQuery<TmdbListResponse>({
+    queryKey: ['korean-tv'],
+    queryFn: () => getKoreanTV(),
+    enabled: !query && filter === 'tv',
+  })
 
-  // 검색 결과에서 person(인물) 제외 — 영화/드라마만 표시
+  const isLoading = searchLoading || moviesLoading || tvLoading || koreanLoading
+
+  // 검색 결과에서 person(인물) 제외
   const searchResults = searchData?.results.filter(
     item => item.media_type !== 'person',
   ) || []
 
+  // TV 탭: 글로벌 인기 + 한국 드라마 혼합 후 중복 제거, 24개 표시
+  const tvResults = tvData?.results || []
+  const koreanResults = koreanData?.results || []
+  const mixedTV = [...tvResults, ...koreanResults]
+    .filter((item, idx, arr) => arr.findIndex(i => i.id === item.id) === idx)
+    .slice(0, 24)
+
   // 필터에 따라 적절한 데이터 선택
   const browseResults =
     filter === 'tv'
-      ? tvData?.results || []
+      ? mixedTV
       : filter === 'movie'
       ? moviesData?.results || []
       : [...(moviesData?.results || []), ...(tvData?.results || [])]

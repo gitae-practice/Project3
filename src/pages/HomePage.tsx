@@ -62,7 +62,7 @@ export default function HomePage() {
             animate="visible"
           >
             {/* TMDB 기본 응답은 20개 — 24개 채우려면 2페이지도 필요하지만 1페이지에서 20개 표시 */}
-            {movies?.results.slice(0, 20).map(item => (
+            {movies?.results.map(item => (
               <motion.div key={item.id} variants={cardVariants}>
                 <MediaCard item={item} mediaType="movie" />
               </motion.div>
@@ -83,7 +83,7 @@ export default function HomePage() {
             initial="hidden"
             animate="visible"
           >
-            {tvShows?.results.slice(0, 20).map(item => (
+            {tvShows?.results.map(item => (
               <motion.div key={item.id} variants={cardVariants}>
                 <MediaCard item={item} mediaType="tv" />
               </motion.div>
@@ -104,7 +104,7 @@ export default function HomePage() {
             initial="hidden"
             animate="visible"
           >
-            {koreanTV?.results.slice(0, 20).map(item => (
+            {koreanTV?.results.map(item => (
               <motion.div key={item.id} variants={cardVariants}>
                 <MediaCard item={item} mediaType="tv" />
               </motion.div>

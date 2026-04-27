@@ -66,8 +66,8 @@ export default function MediaCard({ item, mediaType }: MediaCardProps) {
       onClick={handleCardClick}
       style={{ backgroundColor: '#1c1c1c' }}
     >
-      {/* 포스터 이미지 — 2:3 비율 고정, overflow-hidden을 여기에만 적용 */}
-      <div className="relative rounded-xl overflow-hidden" style={{ aspectRatio: '2/3' }}>
+      {/* 포스터 이미지 — 2:3 비율 고정, 위쪽 radius만 적용해서 하단 텍스트와 자연스럽게 연결 */}
+      <div className="relative rounded-t-xl overflow-hidden" style={{ aspectRatio: '2/3' }}>
         {posterUrl ? (
           <motion.img
             src={posterUrl}

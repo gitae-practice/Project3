@@ -20,29 +20,33 @@ async function tmdbFetch<T>(endpoint: string, params: Record<string, string> = {
   return res.json()
 }
 
-// 인기 영화 목록 — 메인 페이지 트렌딩 섹션에 사용
-export const getPopularMovies = (page = '1') =>
-  tmdbFetch<TmdbListResponse>('/movie/popular', { page })
+// 2페이지를 병렬 fetch하여 최대 24개 반환 — 6열 그리드 4줄 꽉 채우기
+async function tmdbFetch24(endpoint: string, params: Record<string, string> = {}): Promise<TmdbListResponse> {
+  const [p1, p2] = await Promise.all([
+    tmdbFetch<TmdbListResponse>(endpoint, { ...params, page: '1' }),
+    tmdbFetch<TmdbListResponse>(endpoint, { ...params, page: '2' }),
+  ])
+  return { ...p1, results: [...p1.results, ...p2.results].slice(0, 24) }
+}
 
-// 인기 드라마 목록 (글로벌)
-export const getPopularTV = (page = '1') =>
-  tmdbFetch<TmdbListResponse>('/tv/popular', { page })
+// 인기 영화 목록 — 2페이지 병렬 fetch, 24개 반환
+export const getPopularMovies = () => tmdbFetch24('/movie/popular')
 
-// 한국 드라마 목록 — with_original_language=ko로 한국어 작품만 필터
-export const getKoreanTV = (page = '1') =>
-  tmdbFetch<TmdbListResponse>('/discover/tv', {
+// 인기 드라마 목록 (글로벌) — 24개 반환
+export const getPopularTV = () => tmdbFetch24('/tv/popular')
+
+// 한국 드라마 목록 — with_original_language=ko 필터, 24개 반환
+export const getKoreanTV = () =>
+  tmdbFetch24('/discover/tv', {
     with_original_language: 'ko',
     sort_by: 'popularity.desc',
-    page,
   })
 
-// 현재 상영 중인 영화 (트렌딩 배너용)
-export const getTrendingMovies = () =>
-  tmdbFetch<TmdbListResponse>('/trending/movie/week')
+// 트렌딩 영화 (주간) — 24개 반환
+export const getTrendingMovies = () => tmdbFetch24('/trending/movie/week')
 
-// 현재 방영 중인 드라마
-export const getTrendingTV = () =>
-  tmdbFetch<TmdbListResponse>('/trending/tv/week')
+// 트렌딩 드라마 (주간) — 24개 반환
+export const getTrendingTV = () => tmdbFetch24('/trending/tv/week')
 
 // 영화 상세 정보
 export const getMovieDetail = (id: number) =>
