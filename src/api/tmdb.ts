@@ -24,9 +24,17 @@ async function tmdbFetch<T>(endpoint: string, params: Record<string, string> = {
 export const getPopularMovies = (page = '1') =>
   tmdbFetch<TmdbListResponse>('/movie/popular', { page })
 
-// 인기 드라마 목록
+// 인기 드라마 목록 (글로벌)
 export const getPopularTV = (page = '1') =>
   tmdbFetch<TmdbListResponse>('/tv/popular', { page })
+
+// 한국 드라마 목록 — with_original_language=ko로 한국어 작품만 필터
+export const getKoreanTV = (page = '1') =>
+  tmdbFetch<TmdbListResponse>('/discover/tv', {
+    with_original_language: 'ko',
+    sort_by: 'popularity.desc',
+    page,
+  })
 
 // 현재 상영 중인 영화 (트렌딩 배너용)
 export const getTrendingMovies = () =>
