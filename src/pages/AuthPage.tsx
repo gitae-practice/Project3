@@ -71,7 +71,7 @@ export default function AuthPage() {
               이메일을 확인한 후 로그인해주세요.
             </p>
             <button
-              onClick={() => { setSignupDone(false); setMode('signin') }}
+              onClick={() => { setSignupDone(false); setMode('signin'); setEmail(''); setPassword('') }}
               className="text-sm font-medium"
               style={{ color: '#d4a843' }}
             >
@@ -151,7 +151,7 @@ export default function AuthPage() {
               {mode === 'signin' ? '계정이 없으신가요?' : '이미 계정이 있으신가요?'}{' '}
               <button
                 type="button"
-                onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setErrorMsg('') }}
+                onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setEmail(''); setPassword(''); setErrorMsg('') }}
                 className="font-medium"
                 style={{ color: '#d4a843' }}
               >
