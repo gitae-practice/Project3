@@ -48,13 +48,13 @@ export const getTrendingMovies = () => tmdbFetch24('/trending/movie/week')
 // 트렌딩 드라마 (주간) — 24개 반환
 export const getTrendingTV = () => tmdbFetch24('/trending/tv/week')
 
-// 영화 상세 정보
+// 영화 상세 정보 — credits(출연진) + videos(트레일러) 함께 요청
 export const getMovieDetail = (id: number) =>
-  tmdbFetch<TmdbMovieDetail>(`/movie/${id}`, { append_to_response: 'credits' })
+  tmdbFetch<TmdbMovieDetail>(`/movie/${id}`, { append_to_response: 'credits,videos' })
 
 // 드라마 상세 정보
 export const getTVDetail = (id: number) =>
-  tmdbFetch<TmdbTVDetail>(`/tv/${id}`, { append_to_response: 'credits' })
+  tmdbFetch<TmdbTVDetail>(`/tv/${id}`, { append_to_response: 'credits,videos' })
 
 // 검색 — 영화+드라마 통합 검색
 export const searchMulti = (query: string, page = '1') =>
@@ -83,10 +83,20 @@ export interface TmdbListResponse {
   page: number
 }
 
+export interface TmdbVideo {
+  id: string
+  key: string      // YouTube 영상 ID
+  name: string
+  site: string     // 'YouTube'
+  type: string     // 'Trailer' | 'Teaser' | 'Clip' 등
+  official: boolean
+}
+
 export interface TmdbMovieDetail extends TmdbMedia {
   genres: { id: number; name: string }[]
   runtime: number
   credits: { cast: CastMember[] }
+  videos: { results: TmdbVideo[] }
 }
 
 export interface TmdbTVDetail extends TmdbMedia {
@@ -94,6 +104,7 @@ export interface TmdbTVDetail extends TmdbMedia {
   episode_run_time: number[]
   number_of_seasons: number
   credits: { cast: CastMember[] }
+  videos: { results: TmdbVideo[] }
 }
 
 export interface CastMember {

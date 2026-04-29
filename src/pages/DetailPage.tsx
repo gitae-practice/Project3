@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { ArrowLeft, BookmarkPlus, BookmarkCheck } from 'lucide-react'
+import { ArrowLeft, BookmarkPlus, BookmarkCheck, Play } from 'lucide-react'
 import {
   getMovieDetail,
   getTVDetail,
@@ -20,6 +20,7 @@ import {
 } from '../hooks/useWatchlist'
 import StarRating from '../components/ui/StarRating'
 import Spinner from '../components/ui/Spinner'
+import TrailerModal from '../components/ui/TrailerModal'
 import type { MediaType, WatchStatus } from '../types'
 
 // 시청 상태 선택지 목록
@@ -53,6 +54,8 @@ export default function DetailPage() {
 
   // 상태 변경 드롭다운 열림 여부
   const [statusOpen, setStatusOpen] = useState(false)
+  // 트레일러 모달 열림 여부
+  const [trailerOpen, setTrailerOpen] = useState(false)
 
   if (isLoading) return <div className="pt-24"><Spinner size="lg" /></div>
   if (isError || !data) {
@@ -71,9 +74,17 @@ export default function DetailPage() {
   const runtime = movieData.runtime || tvData.episode_run_time?.[0]
   // genres와 credits는 두 타입 모두 동일한 구조로 존재
   const genres = data.genres || []
-  const cast: CastMember[] = data.credits?.cast?.slice(0, 8) || [] // 출연진 최대 8명
+  const cast: CastMember[] = data.credits?.cast?.slice(0, 8) || []
   const backdropUrl = getImageUrl(data.backdrop_path, 'original')
   const posterUrl = getImageUrl(data.poster_path, 'w500')
+
+  // 공식 Trailer 우선, 없으면 Teaser, 그것도 없으면 YouTube 영상 아무거나
+  const videos = data.videos?.results?.filter(v => v.site === 'YouTube') ?? []
+  const trailer =
+    videos.find(v => v.type === 'Trailer' && v.official) ??
+    videos.find(v => v.type === 'Trailer') ??
+    videos.find(v => v.type === 'Teaser') ??
+    videos[0]
 
   // 찜하기 — 기존 항목 없으면 새로 추가
   const handleAddToWatchlist = (status: WatchStatus) => {
@@ -110,6 +121,7 @@ export default function DetailPage() {
   }
 
   return (
+    <>
     <div style={{ backgroundColor: '#0f0f0f', minHeight: '100vh' }}>
       {/* ─── 배경 배너 ─── */}
       <div
@@ -215,6 +227,19 @@ export default function DetailPage() {
                   </span>
                 ))}
               </div>
+            )}
+
+            {/* ─── 예고편 버튼 ─── */}
+            {trailer && (
+              <button
+                onClick={() => setTrailerOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                style={{ backgroundColor: '#f1f1f1', color: '#0f0f0f' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#d4a843')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#f1f1f1')}
+              >
+                <Play size={15} fill="currentColor" /> 예고편 보기
+              </button>
             )}
 
             {/* ─── 찜하기 / 상태 변경 영역 ─── */}
@@ -388,5 +413,11 @@ export default function DetailPage() {
         )}
       </motion.div>
     </div>
+
+    {/* 트레일러 모달 — trailer가 있고 버튼 클릭 시 표시 */}
+    {trailerOpen && trailer && (
+      <TrailerModal videoKey={trailer.key} onClose={() => setTrailerOpen(false)} />
+    )}
+  </>
   )
 }
