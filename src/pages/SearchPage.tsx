@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -6,6 +7,9 @@ import {
   getPopularMovies,
   getPopularTV,
   getKoreanTV,
+  getMovieGenres,
+  getTVGenres,
+  discoverByGenre,
   type TmdbListResponse,
 } from '../api/tmdb'
 import MediaCard from '../components/ui/MediaCard'
@@ -13,64 +17,83 @@ import Spinner from '../components/ui/Spinner'
 import type { MediaType } from '../types'
 
 export default function SearchPage() {
-  // URL 파라미터 읽기 — ?q=검색어 또는 ?filter=movie|tv
   const [searchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
   const filter = searchParams.get('filter') as MediaType | null
 
-  // 검색 결과 fetch — query가 있을 때만 실행
+  // 선택된 장르 ID — null이면 전체
+  const [selectedGenre, setSelectedGenre] = useState<number | null>(null)
+
+  // 탭(filter) 바뀌면 장르 선택 초기화
+  useEffect(() => {
+    setSelectedGenre(null)
+  }, [filter])
+
+  // 검색
   const { data: searchData, isLoading: searchLoading } = useQuery({
     queryKey: ['search', query],
     queryFn: () => searchMulti(query),
     enabled: !!query,
   })
 
-  // 영화 목록 fetch
+  // 인기 영화
   const { data: moviesData, isLoading: moviesLoading } = useQuery<TmdbListResponse>({
     queryKey: ['popular-movies'],
     queryFn: () => getPopularMovies(),
-    enabled: !query && filter !== 'tv',
+    enabled: !query && filter !== 'tv' && !selectedGenre,
   })
 
-  // 글로벌 드라마 목록 fetch
+  // 인기 드라마 (글로벌)
   const { data: tvData, isLoading: tvLoading } = useQuery<TmdbListResponse>({
     queryKey: ['popular-tv'],
     queryFn: () => getPopularTV(),
-    enabled: !query && filter !== 'movie',
+    enabled: !query && filter !== 'movie' && !selectedGenre,
   })
 
-  // 한국 드라마 fetch — TV 탭에서만 추가로 불러와 글로벌 드라마와 혼합
+  // 한국 드라마 — TV 탭 전체보기일 때만 혼합
   const { data: koreanData, isLoading: koreanLoading } = useQuery<TmdbListResponse>({
     queryKey: ['korean-tv'],
     queryFn: () => getKoreanTV(),
-    enabled: !query && filter === 'tv',
+    enabled: !query && filter === 'tv' && !selectedGenre,
   })
 
-  const isLoading = searchLoading || moviesLoading || tvLoading || koreanLoading
+  // 장르 목록 — 영화/TV 탭에서만 fetch
+  const { data: genreData } = useQuery({
+    queryKey: ['genres', filter],
+    queryFn: () => (filter === 'movie' ? getMovieGenres() : getTVGenres()),
+    enabled: (filter === 'movie' || filter === 'tv') && !query,
+  })
 
-  // 검색 결과에서 person(인물) 제외
-  const searchResults = searchData?.results.filter(
-    item => item.media_type !== 'person',
-  ) || []
+  // 장르 선택 시 discover API로 필터링된 결과
+  const { data: genreFilteredData, isLoading: genreLoading } = useQuery<TmdbListResponse>({
+    queryKey: ['discover', filter, selectedGenre],
+    queryFn: () => discoverByGenre(filter as 'movie' | 'tv', selectedGenre!),
+    enabled: !!selectedGenre && (filter === 'movie' || filter === 'tv') && !query,
+  })
 
-  // TV 탭: 글로벌 인기 + 한국 드라마 혼합 후 중복 제거, 24개 표시
-  const tvResults = tvData?.results || []
-  const koreanResults = koreanData?.results || []
-  const mixedTV = [...tvResults, ...koreanResults]
+  // TV 탭 전체보기: 글로벌 + 한국 드라마 혼합, 중복 제거
+  const mixedTV = [...(tvData?.results || []), ...(koreanData?.results || [])]
     .filter((item, idx, arr) => arr.findIndex(i => i.id === item.id) === idx)
     .slice(0, 24)
 
-  // 필터에 따라 적절한 데이터 선택
-  const browseResults =
-    filter === 'tv'
-      ? mixedTV
-      : filter === 'movie'
-      ? moviesData?.results || []
-      : [...(moviesData?.results || []), ...(tvData?.results || [])]
+  // 표시할 결과 결정
+  const browseResults = selectedGenre
+    ? genreFilteredData?.results || []
+    : filter === 'tv'
+    ? mixedTV
+    : filter === 'movie'
+    ? moviesData?.results || []
+    : [...(moviesData?.results || []), ...(tvData?.results || [])]
 
+  const searchResults = searchData?.results.filter(i => i.media_type !== 'person') || []
   const results = query ? searchResults : browseResults
 
-  // 페이지 제목 결정
+  const isLoading = query
+    ? searchLoading
+    : selectedGenre
+    ? genreLoading
+    : moviesLoading || tvLoading || koreanLoading
+
   const pageTitle = query
     ? `"${query}" 검색 결과 ${results.length}개`
     : filter === 'movie'
@@ -79,17 +102,63 @@ export default function SearchPage() {
     ? '인기 드라마'
     : '탐색하기'
 
+  const genres = genreData?.genres || []
+
   return (
     <div style={{ padding: '40px 80px' }}>
       {/* 페이지 제목 */}
       <motion.h1
-        className="text-xl font-bold mb-8"
+        className="text-xl font-bold mb-6"
         style={{ color: '#f1f1f1' }}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
         {pageTitle}
       </motion.h1>
+
+      {/* 장르 칩 — 영화/TV 탭에서 검색 중이 아닐 때만 표시 */}
+      {(filter === 'movie' || filter === 'tv') && !query && genres.length > 0 && (
+        <div
+          className="flex gap-2 mb-8"
+          style={{ overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}
+        >
+          {/* 전체 칩 */}
+          <button
+            onClick={() => setSelectedGenre(null)}
+            className="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+            style={
+              selectedGenre === null
+                ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
+                : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
+            }
+          >
+            전체
+          </button>
+
+          {genres.map(genre => (
+            <button
+              key={genre.id}
+              onClick={() => setSelectedGenre(selectedGenre === genre.id ? null : genre.id)}
+              className="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+              style={
+                selectedGenre === genre.id
+                  ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
+                  : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
+              }
+              onMouseEnter={e => {
+                if (selectedGenre !== genre.id)
+                  e.currentTarget.style.borderColor = '#d4a843'
+              }}
+              onMouseLeave={e => {
+                if (selectedGenre !== genre.id)
+                  e.currentTarget.style.borderColor = '#2a2a2a'
+              }}
+            >
+              {genre.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 로딩 */}
       {isLoading && <Spinner size="lg" />}
@@ -107,13 +176,13 @@ export default function SearchPage() {
       {/* 결과 그리드 */}
       {!isLoading && results.length > 0 && (
         <motion.div
+          key={selectedGenre ?? 'all'}
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
           initial="hidden"
           animate="visible"
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
         >
           {results.map(item => {
-            // 검색 결과는 media_type 포함, 필터 탐색은 filter 값 사용
             const mediaType: MediaType =
               item.media_type === 'tv' ? 'tv'
               : item.media_type === 'movie' ? 'movie'

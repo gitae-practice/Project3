@@ -60,6 +60,20 @@ export const getTVDetail = (id: number) =>
 export const searchMulti = (query: string, page = '1') =>
   tmdbFetch<TmdbListResponse>('/search/multi', { query, page })
 
+// 장르 목록
+export const getMovieGenres = () =>
+  tmdbFetch<TmdbGenreResponse>('/genre/movie/list')
+
+export const getTVGenres = () =>
+  tmdbFetch<TmdbGenreResponse>('/genre/tv/list')
+
+// 장르 ID로 필터링된 결과 — 24개 반환
+export const discoverByGenre = (mediaType: 'movie' | 'tv', genreId: number) =>
+  tmdbFetch24(`/discover/${mediaType}`, {
+    with_genres: String(genreId),
+    sort_by: 'popularity.desc',
+  })
+
 // ─── 타입 정의 ───────────────────────────────────────────────
 
 export interface TmdbMedia {
@@ -112,4 +126,13 @@ export interface CastMember {
   name: string
   character: string
   profile_path: string | null
+}
+
+export interface TmdbGenre {
+  id: number
+  name: string
+}
+
+export interface TmdbGenreResponse {
+  genres: TmdbGenre[]
 }
