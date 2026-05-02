@@ -96,9 +96,12 @@ export function useUpdateWatchlist() {
       if (error) throw error
       return data as WatchlistItem
     },
-    onSuccess: () => {
-      // 어느 항목이 바뀌었는지 모르니 watchlist 관련 캐시 전부 리셋
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+      // watchlist-item은 별도 키라 따로 무효화해야 상세 페이지 별점이 즉시 반영됨
+      queryClient.invalidateQueries({
+        queryKey: ['watchlist-item', data.user_id, data.media_id, data.media_type],
+      })
     },
   })
 }
