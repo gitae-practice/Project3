@@ -42,6 +42,27 @@ export const getKoreanTV = () =>
     sort_by: 'popularity.desc',
   })
 
+// 무한 스크롤용 — 단일 페이지 fetch
+export const getPopularMoviesPaged = (page: number) =>
+  tmdbFetch<TmdbListResponse>('/movie/popular', { page: String(page) })
+
+export const getPopularTVPaged = (page: number) =>
+  tmdbFetch<TmdbListResponse>('/tv/popular', { page: String(page) })
+
+export const getKoreanTVPaged = (page: number) =>
+  tmdbFetch<TmdbListResponse>('/discover/tv', {
+    with_original_language: 'ko',
+    sort_by: 'popularity.desc',
+    page: String(page),
+  })
+
+export const discoverByGenrePaged = (mediaType: 'movie' | 'tv', genreId: number, page: number) =>
+  tmdbFetch<TmdbListResponse>(`/discover/${mediaType}`, {
+    with_genres: String(genreId),
+    sort_by: 'popularity.desc',
+    page: String(page),
+  })
+
 // 트렌딩 영화 (주간) — 24개 반환
 export const getTrendingMovies = () => tmdbFetch24('/trending/movie/week')
 
