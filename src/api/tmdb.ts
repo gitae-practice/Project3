@@ -63,16 +63,17 @@ export const discoverByGenrePaged = (mediaType: 'movie' | 'tv', genreId: number,
     page: String(page),
   })
 
-// 장르·정렬을 자유롭게 조합할 수 있는 범용 discover — 무한 스크롤 정렬 필터용
+// 장르·정렬·언어를 자유롭게 조합할 수 있는 범용 discover — 무한 스크롤 필터용
 export const discoverPaged = (
   mediaType: 'movie' | 'tv',
   page: number,
   genreId?: number,
   sortBy = 'popularity.desc',
+  originalLanguage?: string,
 ) => {
   const params: Record<string, string> = { sort_by: sortBy, page: String(page) }
   if (genreId) params.with_genres = String(genreId)
-  // 평점순은 투표 수가 너무 적은 작품이 상위에 오지 않도록 최소 기준 설정
+  if (originalLanguage) params.with_original_language = originalLanguage
   if (sortBy === 'vote_average.desc') params['vote_count.gte'] = '100'
   return tmdbFetch<TmdbListResponse>(`/discover/${mediaType}`, params)
 }
