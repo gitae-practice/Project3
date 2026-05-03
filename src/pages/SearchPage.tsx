@@ -6,37 +6,57 @@ import {
   searchMulti,
   getPopularMovies,
   getPopularTV,
-  getPopularMoviesPaged,
   getPopularTVPaged,
   getKoreanTVPaged,
   getMovieGenres,
   getTVGenres,
-  discoverByGenrePaged,
+  discoverPaged,
   type TmdbListResponse,
 } from '../api/tmdb'
 import MediaCard from '../components/ui/MediaCard'
 import Spinner from '../components/ui/Spinner'
 import type { MediaType } from '../types'
 
+type SortType = 'popularity' | 'latest' | 'rating'
+
+const SORT_OPTIONS: { value: SortType; label: string }[] = [
+  { value: 'popularity', label: '인기순' },
+  { value: 'latest', label: '최신순' },
+  { value: 'rating', label: '평점순' },
+]
+
+// 사용자 선택 → TMDB sort_by 값으로 변환
+function toSortBy(sort: SortType, filter: MediaType | null): string {
+  if (sort === 'latest') return filter === 'tv' ? 'first_air_date.desc' : 'primary_release_date.desc'
+  if (sort === 'rating') return 'vote_average.desc'
+  return 'popularity.desc'
+}
+
 export default function SearchPage() {
   const [searchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
   const filter = searchParams.get('filter') as MediaType | null
+
   const [selectedGenre, setSelectedGenre] = useState<number | null>(null)
+  const [sortBy, setSortBy] = useState<SortType>('popularity')
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => { setSelectedGenre(null) }, [filter])
+  // 탭 바뀌면 장르·정렬 초기화
+  useEffect(() => {
+    setSelectedGenre(null)
+    setSortBy('popularity')
+  }, [filter])
 
-  // ── 탐색하기(전체) 탭 — 기존 24개 방식 유지 ──────────────────
+  // ── 탐색하기(전체) 탭 — 24개 고정 ────────────────────────────
   const { data: allMoviesData, isLoading: allMoviesLoading } = useQuery<TmdbListResponse>({
     queryKey: ['popular-movies'],
     queryFn: () => getPopularMovies(),
-    enabled: !query && !filter && !selectedGenre,
+    enabled: !query && !filter,
   })
   const { data: allTVData, isLoading: allTVLoading } = useQuery<TmdbListResponse>({
     queryKey: ['popular-tv'],
     queryFn: () => getPopularTV(),
-    enabled: !query && !filter && !selectedGenre,
+    enabled: !query && !filter,
   })
 
   // ── 검색 무한 스크롤 ──────────────────────────────────────────
@@ -50,19 +70,20 @@ export default function SearchPage() {
 
   // ── 영화 탭 무한 스크롤 ───────────────────────────────────────
   const moviesQuery = useInfiniteQuery({
-    queryKey: ['popular-movies-inf'],
-    queryFn: ({ pageParam }) => getPopularMoviesPaged(pageParam as number),
+    queryKey: ['movies-inf', sortBy],
+    queryFn: ({ pageParam }) =>
+      discoverPaged('movie', pageParam as number, undefined, toSortBy(sortBy, 'movie')),
     initialPageParam: 1,
     getNextPageParam: (last) => last.page < last.total_pages ? last.page + 1 : undefined,
     enabled: !query && filter === 'movie' && !selectedGenre,
   })
 
-  // ── TV 탭 무한 스크롤 (1페이지 = 글로벌+한국 혼합) ───────────
+  // ── TV 탭 무한 스크롤 (인기순 1페이지 = 글로벌+한국 혼합) ────
   const tvQuery = useInfiniteQuery({
-    queryKey: ['popular-tv-inf'],
+    queryKey: ['tv-inf', sortBy],
     queryFn: async ({ pageParam }) => {
       const page = pageParam as number
-      if (page === 1) {
+      if (page === 1 && sortBy === 'popularity') {
         const [popular, korean] = await Promise.all([
           getPopularTVPaged(1),
           getKoreanTVPaged(1),
@@ -72,7 +93,7 @@ export default function SearchPage() {
           .slice(0, 20)
         return { ...popular, results: mixed }
       }
-      return getPopularTVPaged(page)
+      return discoverPaged('tv', page, undefined, toSortBy(sortBy, 'tv'))
     },
     initialPageParam: 1,
     getNextPageParam: (last) => last.page < last.total_pages ? last.page + 1 : undefined,
@@ -81,9 +102,14 @@ export default function SearchPage() {
 
   // ── 장르 필터 무한 스크롤 ─────────────────────────────────────
   const genreQuery = useInfiniteQuery({
-    queryKey: ['discover-inf', filter, selectedGenre],
+    queryKey: ['discover-inf', filter, selectedGenre, sortBy],
     queryFn: ({ pageParam }) =>
-      discoverByGenrePaged(filter as 'movie' | 'tv', selectedGenre!, pageParam as number),
+      discoverPaged(
+        filter as 'movie' | 'tv',
+        pageParam as number,
+        selectedGenre!,
+        toSortBy(sortBy, filter),
+      ),
     initialPageParam: 1,
     getNextPageParam: (last) => last.page < last.total_pages ? last.page + 1 : undefined,
     enabled: !!selectedGenre && (filter === 'movie' || filter === 'tv') && !query,
@@ -127,7 +153,7 @@ export default function SearchPage() {
   const hasNextPage = activeInfQuery?.hasNextPage ?? false
   const fetchNextPage = activeInfQuery?.fetchNextPage
 
-  // ── IntersectionObserver — 센티넬이 보이면 다음 페이지 로드 ──
+  // ── IntersectionObserver ──────────────────────────────────────
   useEffect(() => {
     const el = sentinelRef.current
     if (!el || !fetchNextPage) return
@@ -144,7 +170,9 @@ export default function SearchPage() {
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
-  // ── 타이틀 ────────────────────────────────────────────────────
+  const genres = genreData?.genres ?? []
+  const showFilterRow = (filter === 'movie' || filter === 'tv') && !query
+
   const pageTitle = query
     ? `"${query}" 검색 결과`
     : filter === 'movie'
@@ -153,21 +181,48 @@ export default function SearchPage() {
     ? '인기 드라마'
     : '탐색하기'
 
-  const genres = genreData?.genres ?? []
-
   return (
     <div style={{ padding: '40px 80px' }}>
-      <motion.h1
-        className="text-xl font-bold mb-6"
-        style={{ color: '#f1f1f1' }}
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        {pageTitle}
-      </motion.h1>
+
+      {/* 페이지 제목 + 정렬 버튼 */}
+      <div className="flex items-center justify-between mb-6">
+        <motion.h1
+          className="text-xl font-bold"
+          style={{ color: '#f1f1f1' }}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {pageTitle}
+        </motion.h1>
+
+        {showFilterRow && (
+          <div className="flex gap-1.5">
+            {SORT_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setSortBy(opt.value)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={
+                  sortBy === opt.value
+                    ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
+                    : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
+                }
+                onMouseEnter={e => {
+                  if (sortBy !== opt.value) e.currentTarget.style.borderColor = '#d4a843'
+                }}
+                onMouseLeave={e => {
+                  if (sortBy !== opt.value) e.currentTarget.style.borderColor = '#2a2a2a'
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 장르 칩 */}
-      {(filter === 'movie' || filter === 'tv') && !query && genres.length > 0 && (
+      {showFilterRow && genres.length > 0 && (
         <div
           className="flex gap-2 mb-8"
           style={{ overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}
@@ -222,7 +277,7 @@ export default function SearchPage() {
       {/* 결과 그리드 */}
       {!isLoading && results.length > 0 && (
         <motion.div
-          key={selectedGenre ?? filter ?? 'all'}
+          key={`${selectedGenre ?? 'all'}-${sortBy}`}
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
           initial="hidden"
           animate="visible"
@@ -246,16 +301,14 @@ export default function SearchPage() {
         </motion.div>
       )}
 
-      {/* 다음 페이지 로딩 스피너 */}
+      {/* 다음 페이지 로딩 */}
       {isFetchingNextPage && (
         <div className="flex justify-center mt-8">
           <Spinner size="md" />
         </div>
       )}
 
-      {/* 무한 스크롤 감지 센티넬 */}
       <div ref={sentinelRef} style={{ height: 1 }} />
-
       <div className="h-16" />
     </div>
   )
