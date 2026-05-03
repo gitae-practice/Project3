@@ -182,83 +182,102 @@ export default function SearchPage() {
     : '탐색하기'
 
   return (
-    <div style={{ padding: '40px 80px' }}>
+    <div>
+      {/* ── sticky 필터 바 — 스크롤해도 항상 보임 ── */}
+      {showFilterRow && (
+        <div
+          className="sticky z-40"
+          style={{
+            top: 64,
+            backgroundColor: 'rgba(15,15,15,0.97)',
+            backdropFilter: 'blur(12px)',
+            borderBottom: '1px solid #1a1a1a',
+            padding: '10px 80px',
+          }}
+        >
+          {/* 제목 + 정렬 버튼 */}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold" style={{ color: '#f1f1f1' }}>
+              {pageTitle}
+            </span>
+            <div className="flex gap-1.5">
+              {SORT_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSortBy(opt.value)}
+                  className="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+                  style={
+                    sortBy === opt.value
+                      ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
+                      : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
+                  }
+                  onMouseEnter={e => {
+                    if (sortBy !== opt.value) e.currentTarget.style.borderColor = '#d4a843'
+                  }}
+                  onMouseLeave={e => {
+                    if (sortBy !== opt.value) e.currentTarget.style.borderColor = '#2a2a2a'
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* 페이지 제목 + 정렬 버튼 */}
-      <div className="flex items-center justify-between mb-6">
+          {/* 장르 칩 */}
+          {genres.length > 0 && (
+            <div
+              className="flex gap-2"
+              style={{ overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}
+            >
+              <button
+                onClick={() => setSelectedGenre(null)}
+                className="shrink-0 px-4 py-1 rounded-full text-xs font-medium transition-colors"
+                style={
+                  selectedGenre === null
+                    ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
+                    : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
+                }
+              >
+                전체
+              </button>
+              {genres.map(genre => (
+                <button
+                  key={genre.id}
+                  onClick={() => setSelectedGenre(selectedGenre === genre.id ? null : genre.id)}
+                  className="shrink-0 px-4 py-1 rounded-full text-xs font-medium transition-colors"
+                  style={
+                    selectedGenre === genre.id
+                      ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
+                      : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
+                  }
+                  onMouseEnter={e => {
+                    if (selectedGenre !== genre.id) e.currentTarget.style.borderColor = '#d4a843'
+                  }}
+                  onMouseLeave={e => {
+                    if (selectedGenre !== genre.id) e.currentTarget.style.borderColor = '#2a2a2a'
+                  }}
+                >
+                  {genre.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ padding: '24px 80px' }}>
+
+      {/* 검색 결과·탐색하기 탭은 제목만 표시 */}
+      {!showFilterRow && (
         <motion.h1
-          className="text-xl font-bold"
+          className="text-xl font-bold mb-6"
           style={{ color: '#f1f1f1' }}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {pageTitle}
         </motion.h1>
-
-        {showFilterRow && (
-          <div className="flex gap-1.5">
-            {SORT_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setSortBy(opt.value)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                style={
-                  sortBy === opt.value
-                    ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
-                    : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
-                }
-                onMouseEnter={e => {
-                  if (sortBy !== opt.value) e.currentTarget.style.borderColor = '#d4a843'
-                }}
-                onMouseLeave={e => {
-                  if (sortBy !== opt.value) e.currentTarget.style.borderColor = '#2a2a2a'
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 장르 칩 */}
-      {showFilterRow && genres.length > 0 && (
-        <div
-          className="flex gap-2 mb-8"
-          style={{ overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}
-        >
-          <button
-            onClick={() => setSelectedGenre(null)}
-            className="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-            style={
-              selectedGenre === null
-                ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
-                : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
-            }
-          >
-            전체
-          </button>
-          {genres.map(genre => (
-            <button
-              key={genre.id}
-              onClick={() => setSelectedGenre(selectedGenre === genre.id ? null : genre.id)}
-              className="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-              style={
-                selectedGenre === genre.id
-                  ? { backgroundColor: '#d4a843', color: '#0f0f0f' }
-                  : { backgroundColor: '#1c1c1c', color: '#888', border: '1px solid #2a2a2a' }
-              }
-              onMouseEnter={e => {
-                if (selectedGenre !== genre.id) e.currentTarget.style.borderColor = '#d4a843'
-              }}
-              onMouseLeave={e => {
-                if (selectedGenre !== genre.id) e.currentTarget.style.borderColor = '#2a2a2a'
-              }}
-            >
-              {genre.name}
-            </button>
-          ))}
-        </div>
       )}
 
       {/* 초기 로딩 */}
@@ -310,6 +329,7 @@ export default function SearchPage() {
 
       <div ref={sentinelRef} style={{ height: 1 }} />
       <div className="h-16" />
+      </div>
     </div>
   )
 }
