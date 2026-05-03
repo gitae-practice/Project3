@@ -6,11 +6,13 @@ import { ArrowLeft, BookmarkPlus, BookmarkCheck, Play } from 'lucide-react'
 import {
   getMovieDetail,
   getTVDetail,
+  getSimilar,
   getImageUrl,
   type TmdbMovieDetail,
   type TmdbTVDetail,
   type CastMember,
 } from '../api/tmdb'
+import MediaCard from '../components/ui/MediaCard'
 import { useAuth } from '../contexts/AuthContext'
 import {
   useWatchlistItem,
@@ -45,6 +47,14 @@ export default function DetailPage() {
       mediaType === 'movie' ? getMovieDetail(mediaId) : getTVDetail(mediaId),
     enabled: !!mediaId,
   })
+
+  // 비슷한 작품 6개
+  const { data: similarData } = useQuery({
+    queryKey: ['similar', mediaType, mediaId],
+    queryFn: () => getSimilar(mediaType, mediaId),
+    enabled: !!mediaId,
+  })
+  const similarItems = similarData?.results.slice(0, 6) ?? []
 
   // 내 찜 목록에서 이 항목 상태 조회
   const { data: watchlistItem } = useWatchlistItem(user?.id, mediaId, mediaType)
@@ -409,6 +419,29 @@ export default function DetailPage() {
                 )
               })}
             </div>
+          </div>
+        )}
+        {/* ─── 비슷한 작품 ─── */}
+        {similarItems.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-base font-bold mb-4" style={{ color: '#f1f1f1' }}>
+              비슷한 작품
+            </h2>
+            <motion.div
+              className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-4"
+              initial="hidden"
+              animate="visible"
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }}
+            >
+              {similarItems.map(item => (
+                <motion.div
+                  key={item.id}
+                  variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+                >
+                  <MediaCard item={item} mediaType={mediaType} />
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         )}
       </motion.div>

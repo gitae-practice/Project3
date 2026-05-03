@@ -77,6 +77,10 @@ export const getMovieDetail = (id: number) =>
 export const getTVDetail = (id: number) =>
   tmdbFetch<TmdbTVDetail>(`/tv/${id}`, { append_to_response: 'credits,videos' })
 
+// 비슷한 작품 — 상세 페이지 하단 추천용
+export const getSimilar = (mediaType: 'movie' | 'tv', id: number) =>
+  tmdbFetch<TmdbListResponse>(`/${mediaType}/${id}/similar`)
+
 // 검색 — 영화+드라마 통합 검색
 export const searchMulti = (query: string, page = '1') =>
   tmdbFetch<TmdbListResponse>('/search/multi', { query, page })
